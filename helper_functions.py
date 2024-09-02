@@ -56,33 +56,71 @@ def print_structure(data, indent=0):
         print(' ' * indent + f'{type(data)}')
 
 
-def load_models(MLP, Generator):
-	# load generator and classifier
+def load_models(MLP, Generator, path_classifier, mnist_9200=False, relu_4_1024 = True, generator_file='weights/generator.pth'):
+	# load generator
 	G = Generator(ngpu=1)
-	cnn = MLP()
-	G.load_state_dict(torch.load('weights/generator.pth',   map_location='cpu'))
+	G.load_state_dict(torch.load(generator_file,   map_location='cpu'))
+
+
 	# Add your own pytorch model here
 	# Extract and load the state_dict
-	checkpoint = torch.load('weights/mnist_9_200_nat.pth', map_location='cpu')
 	
-	state_dict = checkpoint['state_dict'][0]
+	if mnist_9200 == True:
+		cnn = MLP()
+		checkpoint = torch.load(path_classifier, map_location='cpu')
+		#print(checkpoint)
+		state_dict = checkpoint['state_dict'][0]
+		new_state_dict = OrderedDict()
+		for key, value in state_dict.items():
+			if key.startswith('17'):
+				new_key = key.replace('17', 'classifier.0')
 
-	new_state_dict = OrderedDict()
+			elif key.startswith('1') or key.startswith('3') or key.startswith('5') or key.startswith('7') or key.startswith('9') or key.startswith('11') or key.startswith('13') or key.startswith('15'):
+				new_key = f'main.{key}'
+			else:
+				new_key = key
 
-	for key, value in state_dict.items():
-		if key.startswith('17'):
-			new_key = key.replace('17', 'classifier.0')
+			#print("new_key:", new_key)
+			new_state_dict[new_key] = value
+		state_dict = new_state_dict
+		#cnn.load_state_dict(torch.load('weights/pytorch_cnn.pth', map_location='cpu'))
+		cnn.load_state_dict(state_dict)
 
-		elif key.startswith('1') or key.startswith('3') or key.startswith('5') or key.startswith('7') or key.startswith('9') or key.startswith('11') or key.startswith('13') or key.startswith('15'):
-			new_key = f'main.{key}'
-		else:
-			new_key = key
+	elif relu_4_1024 == True:
+		cnn = Mnist_relu_4_1024()
+		checkpoint = torch.load(path_classifier, map_location='cpu')
 
-		#print("new_key:", new_key)
-		new_state_dict[new_key] = value
+		#remove constant.value
+		del checkpoint['Constant.value']
 
-	#cnn.load_state_dict(torch.load('weights/pytorch_cnn.pth', map_location='cpu'))
-	cnn.load_state_dict(new_state_dict)
+		new_state_dict = OrderedDict()
+
+		for key, value in checkpoint.items():
+	
+			if key.startswith('Gemm.'):
+				new_key = key.replace('Gemm', 'layer1')
+
+			elif key.startswith('Gemm_1'):
+				new_key = key.replace('Gemm_1', 'layer2')
+
+			elif key.startswith('Gemm_2'):
+					new_key = key.replace('Gemm_2', 'layer3')
+
+			elif key.startswith('Gemm_3'):
+				new_key = key.replace('Gemm_3', 'layer4')
+
+			else:
+				pass
+
+			new_state_dict[new_key] = value
+		checkpoint = new_state_dict
+
+		cnn.load_state_dict(checkpoint)
+
+	else:
+		print("Please define your pytorch model in local_models.py and adapt this script.")
+
+
 	G.eval()
 	cnn.eval()
 	return G, cnn
@@ -214,7 +252,6 @@ def get_data_for_feature(dist_data, target_class, feature_map_num):
 
 def return_feature_contribution_data(data_loader, cnn, num_classes=10):
 	'''
-	Taken from the internet (github account: lynoreading)
     Return feature contribution data for each class based on the given data loader and CNN model.
     
     Args:
@@ -237,6 +274,7 @@ def return_feature_contribution_data(data_loader, cnn, num_classes=10):
 		image, label = data
 		label =  int(label.detach().numpy())
 		acts = cnn(image)[1][0].detach().numpy()
+		#acts = cnn(image).detach().numpy()
 		pred = int(torch.argmax(cnn(image)[0]).detach().numpy())
 		pred_idx[pred].append(acts.tolist())
 		if i % 10000 == 0:
@@ -258,13 +296,16 @@ def get_distribution_name(dist):
 
 	
 def acquire_feature_probabilities(target_class, cnn, original_query_img=None, alpha=0.05, picklefile=None):
-	query_features = cnn(original_query_img)[1][0] # This is where the problem is, this is not 128 but 200
-	digit_weights = cnn.classifier[0].weight[target_class]
+	query_features = cnn(original_query_img)[1][0] # This is where the problem is, this is not 128 but 200 or 1024
+	digit_weights = cnn.layer4.weight[target_class] # last layer is layer 4, change per model architecture
+
 
 	with open('data/' + picklefile, 'rb') as handle: # This file is from the old CNN, so only compatible with 128 in last layer. Needs to be replaced with new network
 		dist_data = pickle.load(handle)
 
-	print("dist_data directly from pickle:", dist_data)
+	
+
+	#print("dist_data directly from pickle:", dist_data)
 	fail_results = list()
 	succeed_results = list()
 	high_results = list()
@@ -274,13 +315,19 @@ def acquire_feature_probabilities(target_class, cnn, original_query_img=None, al
 	p_values = list()
 	distribution_type = list()
 
-	for i in range(len(query_features)): # for i in range(200)
+	
+
+	for i in range(len(query_features)): # for i in range(1024) 
 
 		data = get_data_for_feature(dist_data, target_class, feature_map_num=i)
-		print("data from pickle with activations for class 0:", data)
+		#print("data:", data)
 		data = data.T[0].T
+		
 		feature_value = float(query_features[i])
 
+		#print('data:', data)
+		
+		
 		# The issue is now with the hurdle model, value error: zero-size array to reduction operation maximum which has no identity
 		dist_examine = HurdleModel(data, value=feature_value, p_value=alpha)
 		fail_results.append(dist_examine.bern_fail_sig())  
@@ -294,6 +341,7 @@ def acquire_feature_probabilities(target_class, cnn, original_query_img=None, al
 
 	df = pd.DataFrame()
 	df['Feature Map'] = list(range(len(query_features)))
+	# Fixing: ValueError: operands could not be broadcast together with shapes (1,10) (1024,) 
 	df['Contribution'] = query_features.detach().numpy() * digit_weights.detach().numpy()
 	df['Bern Fail'] = fail_results
 	df['Bern Success'] = succeed_results
@@ -348,7 +396,9 @@ def filter_df_of_exceptional_noise(df, target_class, cnn, alpha=0.05):
 
 	df = df[df['Probability of Event'] < alpha]
 	df['flag'] = np.zeros(df.shape[0])
-	digit_weights = cnn.classifier[0].weight[target_class]
+	
+
+	digit_weights = cnn.layer4.weight[target_class] # this is where i get the TypeError: 'Linear object not subscriptable'. Fixed by removing '[0]'
 
 	for idx, row in df.iterrows():
 		feature_idx = int(row['Feature Map'])  
@@ -372,4 +422,13 @@ def filter_df_of_exceptional_noise(df, target_class, cnn, alpha=0.05):
 	del df['flag']
 	
 	return df
+
+
+
+def get_activations(data, model):
+    activations_list = []
+    for i in range(len(data)):
+        pred, activations = model(data[i])
+        activations_list.append(activations)
+    return np.array(activations_list)
 

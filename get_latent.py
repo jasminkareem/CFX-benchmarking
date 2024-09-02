@@ -47,7 +47,7 @@ from evaluation_metrics import *
 
 
 """
-	Get Latent Input z for each test image using gradient descent
+	Get Latent Input z for each test image and target class
 	For details see equation 1 of the paper by Kelly and Keane (2021).
 
 	z =  arg min _(z0) ||C(G(z0)) - C(I)||(^2_2) + ||G(z0) - I||(^2_2)
@@ -58,65 +58,69 @@ from evaluation_metrics import *
 	- C: All layers except the last in trained neural network
 
 	Returns: 
-	- z_opt: Latent input optimized with gradient descent
+	- z: Latent input z to be optimized
 	
 """
 
 
 
 def objective_function(z0, I, C, G):
-    # Difference between a generated instance classified using C and the actual classified instance 
-    term1 = torch.norm(C(G(z0))[1] - C(I)[1])**2
+    # Difference between a generated instance classified using C and the actual classified instance
+    #print(C(G(z0))[1]) 
+    #print(C(I)[1])
+    term1 = torch.norm(C(G(z0))[0] - C(I)[0])**2
     # Difference between generated instance and the actual instance
     term2 = torch.norm(G(z0) - I)**2
     return term1 + term2
 
 
-def gradient_descent(I, C, G, z0, learning_rate=0.01, max_iter=1000, tol=1e-6):
-    z0.requires_grad = True
-    optimizer = optim.SGD([z0], lr=learning_rate)
-    
-    for i in range(max_iter):
-        optimizer.zero_grad()
-        loss = objective_function(z0, I, C, G)
-        loss.backward()
-        optimizer.step()
-        
-        #if torch.norm(z0.grad) < tol:
-        #    break
-    
-    return z0.detach()
-
-
 
 # Load models and data
-G, C = load_models(MLP, Generator)
+path_classifier = 'weights/mnist_relu_4_1024.pt'
+#path_classifier = 'weights/mnist_9_200_nat.pth'
+G, C = load_models(Mnist_relu_4_1024, Generator, path_classifier)
 # classifierCNN = ClassifierCNN(cnn)
 # croppedCNN = CroppedCNN(cnn)
 train_loader, test_loader = load_dataloaders()
 X_train, y_train, X_test, y_test = get_MNIST_data()
-path = '/mnt/c/Users/Jasmin/Documents/PhDy1/nnv-xai-evaluation/AAAI-2021-semifactual/AAAI-2021-master/data/latent_z_mnist_9_200'
+#path = '/mnt/c/Users/Jasmin/Documents/PhDy1/nnv-xai-evaluation/AAAI-2021-semifactual/AAAI-2021-master/data/latent_z_mnist_9_200'
+path = '/mnt/c/Users/Jasmin/Documents/PhDy1/nnv-xai-evaluation/AAAI-2021-semifactual/AAAI-2021-master/data/latent_z_mnist_relu_4_1024'
+lr = 0.01
+epochs = 3000
 
-'''
-for sample_num in range(1): #On entire set: len(test_loader)
+
+for sample_num in range(100): #On entire set: len(test_loader)
     original_query_idx, original_query_img, original_query_label = get_classification(test_loader, C, sample_num)
+    original_query_pred = int(torch.argmax(C(original_query_img)[0]).detach().numpy())
+    print("instance:", sample_num)
+    print("correct label:", original_query_label)
+    print("prediction:", original_query_pred)
     batch_size = original_query_img.size(0) 
-    # Sample z0 from a standard normal distribution
-    #z0 = torch.randn_like(original_query_img)
-    device = torch.device("cpu")
-    z0 = torch.randn(1, 100, 1, 1, device=device)
 
-    # Find optimal z
-    z_opt = gradient_descent(I=original_query_img, C=C, G=G, z0=z0)
+    # Sample z0 from a standard normal distribution
+    device = torch.device("cpu")
+    z = torch.randn(1, 100, 1, 1, device=device)
+
+    # define optimizer and loss
+    z.requires_grad = True
+    optimizer = optim.Adam([z], lr=lr)
+
+    for epoch in range(epochs):
+        loss = objective_function(z0=z, I=original_query_img, C=C, G=G)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
 
     # save optimal z
     filename = "z_opt_MNISTsample_" + str(sample_num) + ".pt"
     save_path = os.path.join(path, filename)
-    torch.save(z_opt, save_path)
+    torch.save(z, save_path)
 
-'''
 
-# check test accuracy of neural network
+
+
+####### check test accuracy of neural network #######
 accurate_instances =  0
 
 for i, data in enumerate(test_loader):

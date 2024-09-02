@@ -26,7 +26,13 @@ class HurdleModel():
 		self.data = data  
 		self.value = value 
 		self.filtered_data = self.data[self.data != 0]
+		if len(self.filtered_data) == 0:
+			self.filtered_data = [0.0001]
+		else:
+			pass
+		#print('filtered data:', self.filtered_data)
 		self.rv, fixed_location = self.__get_dist_type()
+		
 
 		# Try all six PDF options 
 		if fixed_location:
@@ -36,7 +42,11 @@ class HurdleModel():
 
 		self.fixed_location = fixed_location
 		self.p_value = p_value
-		self.bern_param = len(self.filtered_data) / len(self.data)  # probability of "success" in Bernoulli trial
+
+		if self.filtered_data[0] == 0.000001:
+			self.bern_param = 0
+		else:
+			self.bern_param = len(self.filtered_data) / len(self.data)  # probability of "success" in Bernoulli trial
 
 	def __get_dist_type(self):
 
@@ -58,9 +68,17 @@ class HurdleModel():
 					params = rv.fit(self.filtered_data, floc=0)
 				# Error I get when switching trained NN is here (ValueError). 
 				# Error is in the scipy.stats.kstest function: print("test:", scipy.stats.kstest(self.filtered_data, test, args=params))
-				print("Filtered data:", self.filtered_data)
+				#print("Filtered Data:", self.filtered_data)
 				#print("Params:", params)
-				p_values[test + " " + location] = (scipy.stats.kstest(self.filtered_data, test, args=params)[1])
+				
+				if self.filtered_data[0] == 0.0001:
+					p_values[test + " " + location] = (0)
+				else:
+					p_values[test + " " + location] = (scipy.stats.kstest(self.filtered_data, test, args=params)[1])
+
+				#print('p_values:', p_values)
+
+
 
 		max_key = max(p_values, key=lambda k: p_values[k])
 		dist_type, location = max_key.split(" ")

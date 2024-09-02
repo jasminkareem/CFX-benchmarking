@@ -14,7 +14,7 @@ import torchvision.transforms as transforms
 import torchvision.utils as vutils
 import torch.nn.functional as F
 
-'''
+
 class CNN(nn.Module):
 	
 	def __init__(self):
@@ -57,13 +57,11 @@ class CNN(nn.Module):
 		logits = self.classifier(x)
 		return logits, x
 	
-'''
 
-
-class MLP(nn.Module):
+class Mnist_9_200(nn.Module):
 	def __init__(self):
-		# mnist_9_200, not CNN
-		super(MLP, self).__init__()
+		# mnist_9_200
+		super(Mnist_9_200, self).__init__()
 		self.main = nn.Sequential(
 			nn.Flatten(),
 			nn.Linear(784,200),
@@ -93,6 +91,31 @@ class MLP(nn.Module):
 		#x = torch.mean(x.view(x.size(0), x.size(1), -1), dim=2)  # GAP Layer
 		logits = self.classifier(x)
 		return logits, x
+
+
+class Mnist_relu_4_1024(nn.Module):
+	# mnist_relu_4_1024
+	def __init__(self):
+		super(Mnist_relu_4_1024,self).__init__()
+		self.layer1 = nn.Linear(1*28*28, 1024)
+		self.layer2 = nn.Linear(1024, 1024)
+		self.layer3 = nn.Linear(1024, 1024)
+		self.layer4 = nn.Linear(1024, 10)
+
+
+	def forward(self,x):
+		x = x.view(-1, 1*28*28)
+		x = F.relu(self.layer1(x))
+		x = F.relu(self.layer2(x))
+		x = F.relu(self.layer3(x))
+		#features = F.relu(self.layer3(x))
+		logits = self.layer4(x)
+		return logits, x
+	
+
+
+	
+
 
 
 

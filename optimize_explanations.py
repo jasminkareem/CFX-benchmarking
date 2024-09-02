@@ -56,7 +56,7 @@ def optim_c_min_edit(G, cnn, x_q, z_e, criterion, optimizer, target_class):
 		loss1 = torch.dist(x_e[0], x_q, 2)
 		loss2 = lambda_param * criterion(output_e, output_t)
 		loss = loss1 + loss2
-		lambda_param += 0.1
+		lambda_param += 0.01
 		loss.backward(retain_graph=True)  
 		optimizer.step()  
 
@@ -69,25 +69,34 @@ def optim_c_min_edit(G, cnn, x_q, z_e, criterion, optimizer, target_class):
 			print(loss.item())
 
 
-def optim_PIECE(G, cnn, x_prime, z_e, criterion, optimizer):
+def optim_PIECE(G, cnn, x_prime, z_e, criterion, optimizer, target_class):
 	"""
 	Step 3 of the PIECE algorithm
 	returns: z prime
 	"""
+	epoch = 0
 
-	for i in range(300):
-
+	while True: # ensures correct/valid explanations 
+		epoch += 1
 		optimizer.zero_grad()
 		logits, x_e = cnn(G(z_e))
 		loss = criterion(x_e[0], x_prime)
 
 		loss.backward()  
-		optimizer.step()  
+		optimizer.step() 
 
-		if i % 50 == 0:
+		pred = int(torch.argmax(logits[0])) 
+
+		if int(pred) == target_class:
+			return z_e
+		
+		elif epoch >= 1000:
+			print("Explanation is invalid! Returning incorrect explanation.")
+			return z_e
+
+		if epoch % 5 == 0:
 			print("Loss:", loss.item())
 
-	return z_e
 
 
 def optim_Proto_Explanation(query_idx):
