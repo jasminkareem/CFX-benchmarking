@@ -76,15 +76,16 @@ def objective_function(z0, I, C, G):
 
 
 # Load models and data
-path_classifier = 'weights/mnist_relu_4_1024.pt'
+print('-- mnist_schut_mlp --')
+path_classifier = '/mnt/c/Users/Jasmin/Documents/PhDy1/nnv-xai-evaluation/AAAI-2021-semifactual/AAAI-2021-master/weights/mnist_schut_mlp.pt'
 #path_classifier = 'weights/mnist_9_200_nat.pth'
-G, C = load_models(Mnist_relu_4_1024, Generator, path_classifier)
+G, C = load_models(CNN, Generator, path_classifier, "mnist_schut_mlp")
 # classifierCNN = ClassifierCNN(cnn)
 # croppedCNN = CroppedCNN(cnn)
 train_loader, test_loader = load_dataloaders()
 X_train, y_train, X_test, y_test = get_MNIST_data()
 #path = '/mnt/c/Users/Jasmin/Documents/PhDy1/nnv-xai-evaluation/AAAI-2021-semifactual/AAAI-2021-master/data/latent_z_mnist_9_200'
-path = '/mnt/c/Users/Jasmin/Documents/PhDy1/nnv-xai-evaluation/AAAI-2021-semifactual/AAAI-2021-master/data/latent_z_mnist_relu_4_1024'
+path = '/mnt/c/Users/Jasmin/Documents/PhDy1/nnv-xai-evaluation/AAAI-2021-semifactual/AAAI-2021-master/data/latent_z_mnist_schut_mlp'
 lr = 0.01
 epochs = 3000
 
@@ -95,6 +96,9 @@ for sample_num in range(100): #On entire set: len(test_loader)
     print("instance:", sample_num)
     print("correct label:", original_query_label)
     print("prediction:", original_query_pred)
+
+
+
     batch_size = original_query_img.size(0) 
 
     # Sample z0 from a standard normal distribution
@@ -134,6 +138,7 @@ for i, data in enumerate(test_loader):
 
 print("test accuracy:", accurate_instances/len(test_loader))
 # test accuracy of mnist_9_200: 0.5752 
+# test accuracy of mnist_cnn_6_128: 
 
 
 

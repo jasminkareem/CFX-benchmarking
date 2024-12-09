@@ -1,4 +1,4 @@
-# On python version 3.7
+# On python version 3.7.17
 absl-py==0.12.0
 alibi==0.3.2
 astor==0.8.1

@@ -56,7 +56,7 @@ def print_structure(data, indent=0):
         print(' ' * indent + f'{type(data)}')
 
 
-def load_models(MLP, Generator, path_classifier, mnist_9200=False, relu_4_1024 = True, generator_file='weights/generator.pth'):
+def load_models(MLP, Generator, path_classifier, model_name, generator_file='weights/generator.pth'):
 	# load generator
 	G = Generator(ngpu=1)
 	G.load_state_dict(torch.load(generator_file,   map_location='cpu'))
@@ -65,7 +65,7 @@ def load_models(MLP, Generator, path_classifier, mnist_9200=False, relu_4_1024 =
 	# Add your own pytorch model here
 	# Extract and load the state_dict
 	
-	if mnist_9200 == True:
+	if model_name == 'mnist_9200':
 		cnn = MLP()
 		checkpoint = torch.load(path_classifier, map_location='cpu')
 		#print(checkpoint)
@@ -86,7 +86,7 @@ def load_models(MLP, Generator, path_classifier, mnist_9200=False, relu_4_1024 =
 		#cnn.load_state_dict(torch.load('weights/pytorch_cnn.pth', map_location='cpu'))
 		cnn.load_state_dict(state_dict)
 
-	elif relu_4_1024 == True:
+	elif model_name == 'relu_4_1024':
 		cnn = Mnist_relu_4_1024()
 		checkpoint = torch.load(path_classifier, map_location='cpu')
 
@@ -116,6 +116,35 @@ def load_models(MLP, Generator, path_classifier, mnist_9200=False, relu_4_1024 =
 		checkpoint = new_state_dict
 
 		cnn.load_state_dict(checkpoint)
+
+	elif model_name == 'mnist_cnn_6_128':
+		cnn = CNN()
+		checkpoint = torch.load(path_classifier, map_location='cpu')
+		cnn.load_state_dict(checkpoint)
+
+
+	elif model_name == 'mnist_alibi_cnn':
+		cnn = AlibiCNN()
+		checkpoint = torch.load(path_classifier, map_location='cpu')
+		cnn.load_state_dict(checkpoint)
+
+	elif model_name == 'mnist_lenet5':
+		cnn = LeNet5()
+		checkpoint = torch.load(path_classifier, map_location='cpu')
+		cnn.load_state_dict(checkpoint)
+
+	elif model_name == 'mnist_schut_mlp':
+		cnn = MLP_schut()
+		checkpoint = torch.load(path_classifier, map_location='cpu')
+		cnn.load_state_dict(checkpoint)
+
+
+	elif model_name == 'mnist_resnet8':
+		cnn = ResNet(BasicBlock, [1, 1, 1], num_classes=10)
+		checkpoint = torch.load(path_classifier, map_location='cpu')
+		cnn.load_state_dict(checkpoint)
+
+
 
 	else:
 		print("Please define your pytorch model in local_models.py and adapt this script.")
@@ -168,7 +197,7 @@ def load_dataloaders():
 		[transforms.ToTensor(),
 		 transforms.Normalize((0.5,), (0.5,))])
 	train_set = torchvision.datasets.MNIST(
-		root='./data/after_anon_review...',
+		root='./data/mnist', 
 		train=True,
 		download=True,
 		transform=transform)
@@ -177,7 +206,7 @@ def load_dataloaders():
 		batch_size=1,
 		shuffle=False)
 	test_set = torchvision.datasets.MNIST(
-		root='./data/after_anon_review...',
+		root='./data//mnist',
 		train=False,
 		download=True,
 		transform=transform)
@@ -273,8 +302,8 @@ def return_feature_contribution_data(data_loader, cnn, num_classes=10):
 			print(100 * round(i / len(data_loader), 2), "% complete...")
 		image, label = data
 		label =  int(label.detach().numpy())
-		acts = cnn(image)[1][0].detach().numpy()
-		#acts = cnn(image).detach().numpy()
+		#acts = cnn(image)[1][0].detach().numpy()
+		acts = cnn(image)[1].detach().numpy()
 		pred = int(torch.argmax(cnn(image)[0]).detach().numpy())
 		pred_idx[pred].append(acts.tolist())
 		if i % 10000 == 0:

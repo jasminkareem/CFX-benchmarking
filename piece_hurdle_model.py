@@ -27,7 +27,7 @@ class HurdleModel():
 		self.value = value 
 		self.filtered_data = self.data[self.data != 0]
 		if len(self.filtered_data) == 0:
-			self.filtered_data = [0.0001]
+			self.filtered_data = [0.00000001]
 		else:
 			pass
 		#print('filtered data:', self.filtered_data)
@@ -43,7 +43,7 @@ class HurdleModel():
 		self.fixed_location = fixed_location
 		self.p_value = p_value
 
-		if self.filtered_data[0] == 0.000001:
+		if self.filtered_data[0] == 0.00000001:
 			self.bern_param = 0
 		else:
 			self.bern_param = len(self.filtered_data) / len(self.data)  # probability of "success" in Bernoulli trial
@@ -71,7 +71,7 @@ class HurdleModel():
 				#print("Filtered Data:", self.filtered_data)
 				#print("Params:", params)
 				
-				if self.filtered_data[0] == 0.0001:
+				if self.filtered_data[0] == 0.00000001:
 					p_values[test + " " + location] = (0)
 				else:
 					p_values[test + " " + location] = (scipy.stats.kstest(self.filtered_data, test, args=params)[1])
