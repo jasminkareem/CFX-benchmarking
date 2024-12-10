@@ -22,6 +22,7 @@ class HurdleModel():
 		
 		if data.sum() < 0:
 			print("*** ERROR: Must be Positive Data ***")
+			# add alternative distribution here (normal distribution)
 
 		self.data = data  
 		self.value = value 
@@ -35,7 +36,9 @@ class HurdleModel():
 		
 
 		# Try all six PDF options 
+		
 		if fixed_location:
+			
 			self.params = self.rv.fit(self.filtered_data, floc=0)
 		else:
 			self.params = self.rv.fit(self.filtered_data)
@@ -57,14 +60,26 @@ class HurdleModel():
 			for location in ['none', 'floc']:
 				if test == 'norm':
 					rv = scipy.stats.norm
-				elif test == 'gamma':    
-					rv = scipy.stats.gamma
-				elif test == 'expon':    
-					rv = scipy.stats.expon
+				elif test == 'gamma':
+					if self.data.min() < 0:
+						continue
+					else:  
+						rv = scipy.stats.gamma
+					
+				elif test == 'expon':
+					if self.data.min() < 0:
+						continue
+					else:    
+						rv = scipy.stats.expon
 
+
+				#print('filtered data:', self.filtered_data)
 				if location == 'none':
+					#print('locaton is none')
 					params = rv.fit(self.filtered_data) 
 				elif location == 'floc':
+					#print('locaton is floc')
+					#print(min(self.filtered_data))
 					params = rv.fit(self.filtered_data, floc=0)
 				# Error I get when switching trained NN is here (ValueError). 
 				# Error is in the scipy.stats.kstest function: print("test:", scipy.stats.kstest(self.filtered_data, test, args=params))
@@ -79,7 +94,8 @@ class HurdleModel():
 				#print('p_values:', p_values)
 
 
-
+		p_values = {k: v for k, v in p_values.items() if v is not None}
+		#print("p-values:", p_values)
 		max_key = max(p_values, key=lambda k: p_values[k])
 		dist_type, location = max_key.split(" ")
 

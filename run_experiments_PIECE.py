@@ -28,7 +28,7 @@ def main():
     parser.add_argument('--path_classifier', help='Path to the image classifier file', default='mnist_schut_mlp.pt')
     parser.add_argument('--model_name', help='Name of image classifier', default=MLP_schut)
     parser.add_argument('--generator_name', help='Name of generator', default=Generator)
-    parser.add_argument('--path_generator', help='Path to the generator file', default='generator.pth')
+    parser.add_argument('--path_generator', help='Path to the generator file', default='mnist_generator.pth')
     parser.add_argument('--dataset', help='dataset that you would like to use. Default: MNIST', default='mnist')
     parser.add_argument('--new_model', help='Whether or not you are using a new model and hence need to save the pickle file containing activations', default=False)
     parser.add_argument('--pickle_file_name', help='Name of pickle file for given trained neural network', default='mnist_schut_mlp')

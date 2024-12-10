@@ -38,10 +38,10 @@ from torch.autograd import Variable
 from skimage.io import imread
 
 # Local imports
-from local_models import *
-from helper_functions import *
+from local_models_piece import *
+from helper_functions_piece import *
 from piece_hurdle_model import *
-from optimize_explanations import *
+from optimize_explanations_piece import *
 from evaluation_metrics import *
 
 
