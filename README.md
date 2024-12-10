@@ -1,4 +1,4 @@
-# Evaluating the correctness and compactness of counterfactual explanations with formal verification
+# Benchmarking counterfactual explanations
 
 
 This repository is partially based on work by Eoin M. Kenny and Mark T. Keane in their paper _On Generating Plausible Counterfactual and
