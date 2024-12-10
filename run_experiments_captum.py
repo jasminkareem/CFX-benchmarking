@@ -395,7 +395,7 @@ def main():
             experiment_data = pd.concat([experiment_data, temp_data])
 
      print(experiment_data.head())
-     csv_file_name = path_explanations +'output_Captum'+ dataset +'_data.csv'
+     csv_file_name = path_explanations +'output_Captum_'+ dataset +'_data.csv'
      new_path_csv = os.path.join(save_path,csv_file_name)
      print(new_path_csv)
      experiment_data.to_csv(new_path_csv, index=False) 
