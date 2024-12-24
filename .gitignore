@@ -1,0 +1,7 @@
+/data/*
+/mnist_lenet5_output/*
+/mnist_alibi_cnn_output/*/*
+*.gz
+*.pt
+*_data.csv
+*.pyc
