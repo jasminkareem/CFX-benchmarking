@@ -278,7 +278,140 @@ class ResNet(nn.Module):
         logits = self.fc(x)
 
         return logits, x
+    
 
+
+
+# CIFAR models
+class CaptumCNN(nn.Module):
+    def __init__(self):
+        super(CaptumCNN, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool1 = nn.MaxPool2d(2, 2)
+        self.pool2 = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+        self.relu1 = nn.ReLU()
+        self.relu2 = nn.ReLU()
+        self.relu3 = nn.ReLU()
+        self.relu4 = nn.ReLU()
+
+    def forward(self, x):
+        x = self.pool1(self.relu1(self.conv1(x)))
+        x = self.pool2(self.relu2(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
+        x = self.relu3(self.fc1(x))
+        x = self.relu4(self.fc2(x))
+        logits = self.fc3(x)
+        return logits, x
+    
+
+
+
+
+class ResNet_small_cifar(nn.Module):
+    def __init__(self, block, layers, num_classes=10):
+        super(ResNet_small_cifar, self).__init__()
+        self.in_channels = 16
+
+        # Initial convolution 
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.relu = nn.ReLU(inplace=True)
+
+        # Residual layers
+        self.layer1 = self._make_layer(block, 16, layers[0], stride=1)
+        self.layer2 = self._make_layer(block, 32, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, 64, layers[2], stride=2)
+
+        # Adaptive average pooling and fully connected layer
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(64 * block.expansion, num_classes)
+
+    def _make_layer(self, block, out_channels, blocks, stride=1):
+        downsample = None
+        if stride != 1 or self.in_channels != out_channels * block.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.in_channels, out_channels * block.expansion, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels * block.expansion),
+            )
+
+        layers = []
+        layers.append(block(self.in_channels, out_channels, stride, downsample))
+        self.in_channels = out_channels * block.expansion
+        for _ in range(1, blocks):
+            layers.append(block(self.in_channels, out_channels))
+
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        logits = self.fc(x)
+
+        return logits, x
+
+
+
+class ResNet_large_cifar(nn.Module):
+    def __init__(self, block, layers, num_classes=10):
+        super(ResNet_large_cifar, self).__init__()
+        self.in_channels = 32
+
+        # Initial convolution 
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.relu = nn.ReLU(inplace=True)
+
+        # Residual layers
+        self.layer1 = self._make_layer(block, 32, layers[0], stride=1)
+        self.layer2 = self._make_layer(block, 64, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, 128, layers[2], stride=2)
+
+        # Adaptive average pooling and fully connected layer
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(128 * block.expansion, num_classes)
+
+    def _make_layer(self, block, out_channels, blocks, stride=1):
+        downsample = None
+        if stride != 1 or self.in_channels != out_channels * block.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.in_channels, out_channels * block.expansion, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels * block.expansion),
+            )
+
+        layers = []
+        layers.append(block(self.in_channels, out_channels, stride, downsample))
+        self.in_channels = out_channels * block.expansion
+        for _ in range(1, blocks):
+            layers.append(block(self.in_channels, out_channels))
+
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        logits = self.fc(x)
+
+        return logits, x
 
 
 	
@@ -315,6 +448,10 @@ class AE(nn.Module):
 		return x
 
 
+
+    
+
+
 class Generator(nn.Module):
 	def __init__(self, ngpu, nc=1, nz=100, ngf=64):
 		super(Generator, self).__init__()
@@ -345,4 +482,34 @@ class Generator(nn.Module):
 		return output
 
 
-	 
+class Generator_Cifar(nn.Module):
+    def __init__(self, ngpu, nc=3, nz=100, ngf=64):
+        super(Generator_Cifar, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is Z, going into a convolution
+            nn.ConvTranspose2d(     nz, ngf * 8, 4, 1, 0, bias=False),
+            nn.BatchNorm2d(ngf * 8),
+            nn.ReLU(True),
+            # state size. (ngf*8) x 4 x 4
+            nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 4),
+            nn.ReLU(True),
+            # state size. (ngf*4) x 8 x 8
+            nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
+            # state size. (ngf*2) x 16 x 16
+            nn.ConvTranspose2d(ngf * 2,     ngf, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(    ngf,      nc, kernel_size=1, stride=1, padding=0, bias=False),
+            nn.Tanh()
+        )
+
+    def forward(self, input):
+        if input.is_cuda and self.ngpu > 1:
+            output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+        else:
+            output = self.main(input)
+        return output
