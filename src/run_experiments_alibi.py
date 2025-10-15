@@ -66,7 +66,7 @@ def main():
      path_explanations = args.path_explanations
      #target_classes = args.target_classes
 
-     save_path = '/ivi/ilps/personal/jkareem/reproducing-CFX-methods-data'
+     save_path = '../raw-results-data'
      #pathlib.Path(save_path + '/mnist_alibi_cnn_output').mkdir(parents=True, exist_ok=True)
 
 

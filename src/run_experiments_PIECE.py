@@ -35,7 +35,7 @@ def main():
     parser.add_argument('--pickle_file', help='Path to pickle file', default='pred_features_mnist_schut_mlp.pickle')
     parser.add_argument('--n_samples', help='Number of samples/instances you want to create explanations for', default=100) 
     parser.add_argument('--path_explanations', help='Path to output explanations and original instance', default='mnist_schut_mlp_output/')
-    parser.add_argument('--latent_file_path', help='Location of latent files', default="latent_files/latent_z_mnist_schut_mlp/z_opt_MNISTsample_")
+    parser.add_argument('--latent_file_path', help='Location of latent files', default="data-for-running/latent_z_mnist_schut_mlp/z_opt_MNISTsample_")
     #parser.add_argument('--target_classes', help='File with target classes for each instances', default='target_classes_1.csv')
 
     args = parser.parse_args()
@@ -57,7 +57,7 @@ def main():
 
 
     # Add target directory here
-    save_path = '/ivi/ilps/personal/jkareem/reproducing-CFX-methods-data'
+    save_path = '../raw-results-data'
 
     # Start
     G, cnn = load_models(MLP=model, Generator=Gen, path_classifier=os.path.join(save_path, path_classifier), model_name=model_name, generator_file=os.path.join(save_path, path_generator))

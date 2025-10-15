@@ -77,15 +77,14 @@ def objective_function(z0, I, C, G):
 
 # Load models and data
 print('-- mnist_schut_mlp --')
-path_classifier = '/mnt/c/Users/Jasmin/Documents/PhDy1/nnv-xai-evaluation/AAAI-2021-semifactual/AAAI-2021-master/weights/mnist_schut_mlp.pt'
+path_classifier = '../models/mnist/mnist_schut_mlp.pt'
 #path_classifier = 'weights/mnist_9_200_nat.pth'
 G, C = load_models(CNN, Generator, path_classifier, "mnist_schut_mlp")
 # classifierCNN = ClassifierCNN(cnn)
 # croppedCNN = CroppedCNN(cnn)
 train_loader, test_loader = load_dataloaders()
 X_train, y_train, X_test, y_test = get_MNIST_data()
-#path = '/mnt/c/Users/Jasmin/Documents/PhDy1/nnv-xai-evaluation/AAAI-2021-semifactual/AAAI-2021-master/data/latent_z_mnist_9_200'
-path = '/mnt/c/Users/Jasmin/Documents/PhDy1/nnv-xai-evaluation/AAAI-2021-semifactual/AAAI-2021-master/data/latent_z_mnist_schut_mlp'
+path = '../data-for-running/latent_z_mnist_schut_mlp'
 lr = 0.01
 epochs = 3000
 

@@ -258,7 +258,7 @@ def main():
      #target_classes = args.target_classes
 
      # Add target directory here
-     save_path = '/ivi/ilps/personal/jkareem/reproducing-CFX-methods-data'
+     save_path = '../raw-results-data'
 
 
      if dataset == 'mnist':

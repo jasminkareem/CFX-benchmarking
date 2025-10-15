@@ -56,7 +56,7 @@ def print_structure(data, indent=0):
         print(' ' * indent + f'{type(data)}')
 
 
-def load_models(MLP, Generator, path_classifier, model_name, generator_file='weights/generator.pth'):
+def load_models(MLP, Generator, path_classifier, model_name, generator_file='../models/mnist/mnist_generator.pth'):
 	# load generator
 	G = Generator(ngpu=1)
 	G.load_state_dict(torch.load(generator_file,   map_location='cpu'))
@@ -320,7 +320,7 @@ def acquire_feature_probabilities(target_class, cnn, original_query_img=None, al
 	digit_weights = cnn.classifier.weight[target_class] # last layer is layer 4 in relu mlp "cnn.layer4.weight[target_class]", change per model architecture 
 	
 
-	with open('/ivi/ilps/personal/jkareem/reproducing-CFX-methods-data/' + picklefile, 'rb') as handle: # This file is from the old CNN, so only compatible with 128 in last layer. Needs to be replaced with new network
+	with open('../models/mnist/' + picklefile, 'rb') as handle: # This file is from the old CNN, so only compatible with 128 in last layer. Needs to be replaced with new network
 		dist_data = pickle.load(handle)
 
 	
